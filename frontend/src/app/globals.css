@@ -547,3 +547,140 @@ code,
   background: linear-gradient(to bottom, var(--accent-cyan)44, var(--accent-lime)44);
   margin: 0 auto;
 }
+
+/* ── Astra Voice Panel ──────────────────────────────────────── */
+
+.voice-panel {
+  padding: 2rem;
+  position: relative;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.02) 0%, transparent 40%);
+  border: 3px solid #252525;
+  overflow: hidden;
+}
+
+.voice-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-lime));
+}
+
+/* ── Mic Button ─────────────────────────────────────────────── */
+
+.voice-mic-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0px #000;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.voice-mic-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #000;
+}
+
+.voice-mic-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
+
+.voice-mic-btn:disabled {
+  opacity: 0.5;
+}
+
+/* ── Live Transcript ────────────────────────────────────────── */
+
+.voice-live-transcript {
+  text-align: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg-card);
+  border: 2px solid #333;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ── Chat History ───────────────────────────────────────────── */
+
+.voice-chat-history {
+  margin-top: 1.5rem;
+}
+
+.voice-messages-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.voice-messages-scroll::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.voice-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid;
+  position: relative;
+}
+
+.voice-message-user {
+  border-color: #333;
+  background: var(--bg-card);
+  margin-left: 2rem;
+}
+
+.voice-message-assistant {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.03);
+  margin-right: 2rem;
+  border-left: 4px solid var(--accent-cyan);
+}
+
+.voice-message-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3rem;
+  color: var(--text-muted);
+}
+
+.voice-message-assistant .voice-message-role {
+  color: var(--accent-cyan);
+}
+
+.voice-message-content {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ── Voice Pulse Ring ───────────────────────────────────────── */
+
+@keyframes voice-ring-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.voice-mic-btn.recording::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #ff1744;
+  animation: voice-ring-pulse 1.5s ease-out infinite;
+}

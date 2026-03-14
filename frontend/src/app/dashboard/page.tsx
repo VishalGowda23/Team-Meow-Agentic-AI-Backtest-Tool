@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import MinimalBackground from "@/components/MinimalBackground";
 
 const PipelineFlow = dynamic(() => import("../components/PipelineFlow"), { ssr: false });
+const VoicePanel = dynamic(() => import("@/components/VoicePanel"), { ssr: false });
 import Link from "next/link";
 import { useRef } from "react";
 import { TearsheetPdf } from "../components/TearsheetPdf";
@@ -143,7 +144,7 @@ function DashboardContent() {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [activeAgentIdx, setActiveAgentIdx] = useState(-1);
   const [error, setError] = useState("");
-  const [mode, setMode] = useState<"backtest" | "generate">("backtest");
+  const [mode, setMode] = useState<"backtest" | "generate" | "voice">("backtest");
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [macroShieldEnabled, setMacroShieldEnabled] = useState(true);
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -314,7 +315,9 @@ function DashboardContent() {
             </div>
           </div>
           <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-            {mode === "generate"
+            {mode === "voice"
+              ? "Talk to Astra — your AI trading advisor. Discuss strategies, ask questions, or describe your trading goals using your voice."
+              : mode === "generate"
               ? "Describe your trading goal. Our CrewAI agents (Market Analyst → Strategy Architect → Risk Assessor) will design and backtest the optimal strategy."
               : "Describe your trading strategy in natural language. Our agentic pipeline handles parsing, validation, compilation, simulation, and analysis."}
           </p>
@@ -348,7 +351,27 @@ function DashboardContent() {
           >
             🤖 Generate Strategy
           </button>
+          <button
+            className="nb-btn text-sm py-2.5 px-5 flex-1 md:flex-none"
+            style={{
+              background: mode === "voice" ? "var(--accent-purple)" : "var(--bg-card)",
+              color: mode === "voice" ? "#000" : "var(--text-secondary)",
+              border: `3px solid ${mode === "voice" ? "var(--accent-purple)" : "#333"}`,
+              fontWeight: 700,
+              boxShadow: mode === "voice" ? "4px 4px 0px #000" : "none",
+            }}
+            onClick={() => { setMode("voice"); setResult(null); setError(""); }}
+          >
+            🎙️ Voice Mode
+          </button>
         </div>
+
+        {/* ── Voice Mode ──────────────────────────────────── */}
+        {mode === "voice" && (
+          <div className="mb-6">
+            <VoicePanel />
+          </div>
+        )}
 
         {/* ── Strategy Input (Backtest Mode) ──────────────── */}
         {mode === "backtest" && (

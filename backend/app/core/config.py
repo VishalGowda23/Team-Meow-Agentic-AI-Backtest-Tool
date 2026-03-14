@@ -18,6 +18,17 @@ class Settings:
     LLM_MAX_TOKENS: int = 2048
     LLM_TIMEOUT: int = 15
 
+    # Voice / Whisper
+    GROQ_WHISPER_MODEL: str = "whisper-large-v3-turbo"
+    VOICE_LLM_MODEL: str = "llama-3.3-70b-versatile"
+    VOICE_MAX_TOKENS: int = 512
+    VOICE_TEMPERATURE: float = 0.3
+
+    # Twilio WhatsApp
+    TWILIO_ACCOUNT_SID: str = os.getenv("TWILIO_ACCOUNT_SID", "")
+    TWILIO_AUTH_TOKEN: str = os.getenv("TWILIO_AUTH_TOKEN", "")
+    TWILIO_WHATSAPP_FROM: str = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
+
     # Alpha Vantage (optional — for data fallback)
     ALPHA_VANTAGE_KEY: str = os.getenv("ALPHA_VANTAGE_KEY", "")
 

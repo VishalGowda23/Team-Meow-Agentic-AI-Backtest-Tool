@@ -98,7 +98,9 @@ def compile_strategy(df: pd.DataFrame, strategy: StrategySchema) -> CompiledSign
     for rule in strategy.entry.rules:
         entry_signals.append(_evaluate_rule(df, rule))
 
-    if strategy.entry.logic == "all":
+    if not entry_signals:
+        entry = pd.Series(False, index=df.index)
+    elif strategy.entry.logic == "all":
         entry = pd.concat(entry_signals, axis=1).all(axis=1)
     else:
         entry = pd.concat(entry_signals, axis=1).any(axis=1)
@@ -108,7 +110,9 @@ def compile_strategy(df: pd.DataFrame, strategy: StrategySchema) -> CompiledSign
     for rule in strategy.exit.rules:
         exit_signals.append(_evaluate_rule(df, rule))
 
-    if strategy.exit.logic == "all":
+    if not exit_signals:
+        exit_sig = pd.Series(False, index=df.index)
+    elif strategy.exit.logic == "all":
         exit_sig = pd.concat(exit_signals, axis=1).all(axis=1)
     else:
         exit_sig = pd.concat(exit_signals, axis=1).any(axis=1)
