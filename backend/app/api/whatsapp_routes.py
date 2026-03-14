@@ -26,12 +26,15 @@ _chat_history: dict[str, list[dict]] = {}
 def _process_message_async(from_number: str, body: str, base_url: str):
     """Process incoming WhatsApp message in background thread."""
     try:
+        print(f"DEBUG: Processing message from {from_number}: {body}")
+        
         # Classify intent
         classification = classify_intent(body)
         intent = classification["intent"]
+        print(f"DEBUG: Classified intent as: {intent}")
 
         if intent == "backtest":
-            # ── Run backtest pipeline ────────────────────────
+            print("DEBUG: Triggering backtest pipeline")
             send_whatsapp_text(from_number, "⚡ *Running backtest pipeline...*\nThis may take 10-30 seconds.")
 
             req = ParseRequest(
@@ -42,6 +45,7 @@ def _process_message_async(from_number: str, body: str, base_url: str):
                 macro_shield_enabled=True,
             )
             result = run_full_pipeline(req)
+            print(f"DEBUG: Backtest status: {result.status}")
 
             if result.status == "failed":
                 send_whatsapp_text(from_number, f"❌ *Backtest failed*\n\n{result.error}")
@@ -49,7 +53,7 @@ def _process_message_async(from_number: str, body: str, base_url: str):
                 send_whatsapp_report(from_number, result, base_url)
 
         elif intent == "generate":
-            # ── Run CrewAI generation ────────────────────────
+            print("DEBUG: Triggering CrewAI generation")
             send_whatsapp_text(from_number, "🤖 *CrewAI agents are designing your strategy...*\nThis may take 30-60 seconds.")
 
             result = generate_and_backtest(
@@ -57,6 +61,7 @@ def _process_message_async(from_number: str, body: str, base_url: str):
                 symbol=classification["symbol"],
                 lookback=classification["lookback"],
             )
+            print(f"DEBUG: Generation status: {result.status}")
 
             if result.status == "failed":
                 send_whatsapp_text(from_number, f"❌ *Generation failed*\n\n{result.error}")
@@ -64,7 +69,7 @@ def _process_message_async(from_number: str, body: str, base_url: str):
                 send_whatsapp_report(from_number, result, base_url)
 
         else:
-            # ── Chat with Astra ──────────────────────────────
+            print("DEBUG: Handling general chat")
             history = _chat_history.get(from_number, [])
             chat_result = chat_with_astra(body, history)
 
@@ -75,8 +80,10 @@ def _process_message_async(from_number: str, body: str, base_url: str):
 
             reply = format_chat_message(chat_result["response"])
             send_whatsapp_text(from_number, reply)
+            print("DEBUG: Chat response sent")
 
     except Exception as e:
+        print(f"DEBUG: Exception in _process_message_async: {e}")
         traceback.print_exc()
         try:
             send_whatsapp_text(from_number, f"⚠️ *Error*\n\n{str(e)[:200]}")
@@ -86,30 +93,24 @@ def _process_message_async(from_number: str, body: str, base_url: str):
 
 @whatsapp_router.post("/api/whatsapp/webhook")
 async def whatsapp_webhook(request: Request):
-    """Twilio webhook — receives incoming WhatsApp messages.
-
-    Twilio sends form-encoded data with:
-    - From: sender phone (e.g., whatsapp:+91XXXXXXXXXX)
-    - Body: message text
-    - NumMedia: number of media attachments
-    """
+    """Twilio webhook — receives incoming WhatsApp messages."""
     form = await request.form()
     from_number = form.get("From", "")
     body = form.get("Body", "").strip()
     num_media = int(form.get("NumMedia", "0"))
 
+    print(f"DEBUG: Webhook hit from {from_number} with body: {body}")
+
     if not body and num_media == 0:
         return PlainTextResponse("ok")
 
-    # If no text but has media, acknowledge
     if not body and num_media > 0:
         send_whatsapp_text(from_number, "🎵 Voice messages are coming soon! For now, please type your strategy or question.")
         return PlainTextResponse("ok")
 
-    # Determine base URL for serving chart images
     base_url = str(request.base_url).rstrip("/")
+    print(f"DEBUG: Base URL for media: {base_url}")
 
-    # Process in background to respond to Twilio quickly (< 15s timeout)
     thread = threading.Thread(
         target=_process_message_async,
         args=(from_number, body, base_url),
@@ -117,7 +118,6 @@ async def whatsapp_webhook(request: Request):
     )
     thread.start()
 
-    # Return empty TwiML (we send responses via API, not TwiML)
     return PlainTextResponse("ok")
 
 
@@ -125,7 +125,9 @@ async def whatsapp_webhook(request: Request):
 async def serve_media(filename: str):
     """Serve chart images for Twilio media URLs."""
     filepath = os.path.join("/tmp", filename)
+    print(f"DEBUG: Serving media request for {filename}")
     if not os.path.exists(filepath):
+        print(f"DEBUG: Media file not found: {filepath}")
         return PlainTextResponse("Not found", status_code=404)
     return FileResponse(filepath, media_type="image/png")
 
