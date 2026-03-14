@@ -1,0 +1,8 @@
+{
+	"appId": "com.astra.voiceapp",
+	"appName": "Astra",
+	"webDir": "out",
+	"server": {
+		"cleartext": true
+	}
+}
