@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import MinimalBackground from "@/components/MinimalBackground";
 
 const PipelineFlow = dynamic(() => import("../components/PipelineFlow"), { ssr: false });
+const DeploymentCard = dynamic(() => import("../components/DeploymentCard"), { ssr: false });
 import Link from "next/link";
 import { useRef } from "react";
 import { TearsheetPdf } from "../components/TearsheetPdf";
@@ -1108,6 +1109,9 @@ function DashboardContent() {
                 status={result.status}
               />
             </div>
+
+            {/* ── TradingView Deployment Card ────────────────── */}
+            <DeploymentCard strategyJson={result} symbol={result.symbol} />
 
             {/* ── Export buttons ────────────────────────────── */}
             <div className="flex gap-3 flex-wrap">

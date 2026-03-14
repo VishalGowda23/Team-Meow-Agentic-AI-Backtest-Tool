@@ -69,3 +69,32 @@ async def health():
         "version": settings.APP_VERSION,
         "llm_configured": bool(settings.GROQ_API_KEY),
     }
+
+
+class PineScriptRequest(BaseModel):
+    """Request to generate TradingView PineScript from a strategy."""
+    strategy_json: dict
+
+
+class PineScriptResponse(BaseModel):
+    """Response containing generated PineScript code."""
+    pinescript_code: str
+    status: str
+
+
+@router.post("/api/generate-production-code", response_model=PineScriptResponse)
+async def generate_production_code(req: PineScriptRequest):
+    """Generate TradingView PineScript v5 from strategy JSON.
+
+    This endpoint is fully decoupled from the backtest pipeline.
+    It makes an independent LLM call and does not block any other operation.
+    """
+    try:
+        from app.agents.pinescript_agent import generate_pinescript
+        code = generate_pinescript(req.strategy_json)
+        return PineScriptResponse(pinescript_code=code, status="success")
+    except Exception as e:
+        return PineScriptResponse(
+            pinescript_code=f"// Error generating PineScript: {e}",
+            status="error",
+        )
