@@ -96,6 +96,7 @@ class ParseRequest(BaseModel):
     symbol: str = "AAPL"
     timeframe: str = "1d"
     lookback: str = "2y"
+    macro_shield_enabled: bool = True
 
 
 class BacktestRequest(BaseModel):
@@ -103,3 +104,4 @@ class BacktestRequest(BaseModel):
     symbol: str = "AAPL"
     timeframe: str = "1d"
     lookback: str = "2y"
+    macro_shield_enabled: bool = True

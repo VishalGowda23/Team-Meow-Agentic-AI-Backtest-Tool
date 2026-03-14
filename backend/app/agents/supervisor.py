@@ -9,6 +9,7 @@ from app.parsing.parser import parse_strategy
 from app.data.adapters import fetch_bars, detect_market
 from app.backtesting.compiler import compile_strategy
 from app.backtesting.engine import run_backtest
+from app.backtesting.macro_shield import apply_macro_shield
 from app.analytics.metrics import compute_metrics, generate_risk_warnings, generate_insights
 
 
@@ -72,6 +73,29 @@ def run_full_pipeline(req: ParseRequest) -> BacktestResult:
             summary=f"Warmup: {signals.warmup} bars. Entry signals: {int(signals.entry.sum())}. Exit signals: {int(signals.exit.sum())}."
         ))
 
+        # ── Stage 4.5: Macro-Shield Agent ────────────────────────
+        t0 = time.time()
+        if req.macro_shield_enabled:
+            pre_shield_entries = int(signals.entry.sum())
+            signals, shield_report = apply_macro_shield(df, signals)
+            post_shield_entries = int(signals.entry.sum())
+            gated = pre_shield_entries - post_shield_entries
+            agent_logs.append(_log_agent(
+                "Macro-Shield", t0,
+                summary=(
+                    f"Events: {shield_report.total_events}. "
+                    f"Shocks: {shield_report.shocks_detected}. "
+                    f"Signals gated: {gated}/{pre_shield_entries}."
+                ),
+            ))
+        else:
+            from app.backtesting.macro_shield import MacroShieldReport
+            shield_report = MacroShieldReport()
+            agent_logs.append(_log_agent(
+                "Macro-Shield", t0, status="skipped",
+                summary="Disabled by user.",
+            ))
+
         # ── Stage 5: Execution Agent ────────────────────────────
         t0 = time.time()
         engine_result = run_backtest(df, signals, strategy)
@@ -130,6 +154,7 @@ def run_full_pipeline(req: ParseRequest) -> BacktestResult:
             risk_warnings=risk_warnings,
             insights=insights,
             agent_logs=agent_logs,
+            macro_shield_report=shield_report.to_dict(),
             status="completed",
             duration_ms=total_ms,
         )

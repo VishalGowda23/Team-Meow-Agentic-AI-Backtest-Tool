@@ -80,6 +80,9 @@ class BacktestResult(BaseModel):
     insights: list[Insight] = Field(default_factory=list)
     agent_logs: list[AgentLog] = Field(default_factory=list)
 
+    # Macro-Shield
+    macro_shield_report: dict = Field(default_factory=dict)
+
     status: str = "completed"
     error: str | None = None
     duration_ms: int = 0

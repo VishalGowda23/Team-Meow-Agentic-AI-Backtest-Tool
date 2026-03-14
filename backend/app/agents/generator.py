@@ -31,6 +31,10 @@ INDICATOR_ALIASES = {
     "bb_mid": "bollinger_mid",
     "boll_upper": "bollinger_upper",
     "boll_lower": "bollinger_lower",
+    "boll_mid": "bollinger_mid",
+    "upper_band": "bollinger_upper",
+    "lower_band": "bollinger_lower",
+    "middle_band": "bollinger_mid",
     "signal": "macd_signal",
     "macd_signal_line": "macd_signal",
     "macd_line": "macd",
@@ -193,9 +197,26 @@ def _build_rule(rule: dict) -> dict | None:
                         comp_params["std"] = v
                 r["right"] = {"indicator": comp_indicator, "params": comp_params if comp_params else {"period": 14}}
             else:
-                r["right"] = {"value": 50}
+                # If they gave an invalid indicator name, check if it's an alias or fallback to value
+                normalized = _normalize_indicator(str(compare["indicator"]))
+                if normalized in VALID_INDICATORS:
+                    r["right"] = {"indicator": normalized, "params": {"period": 14}}
+                else:
+                    r["right"] = {"value": 50}
         elif isinstance(compare, dict) and "value" in compare:
-            r["right"] = {"value": compare["value"]}
+            val = compare["value"]
+            if isinstance(val, str):
+                # Check if this "value" is actually an indicator name (hallucination)
+                normalized = _normalize_indicator(val)
+                if normalized in VALID_INDICATORS:
+                    r["right"] = {"indicator": normalized, "params": {"period": 14}}
+                else:
+                    try:
+                        r["right"] = {"value": float(val)}
+                    except (ValueError, TypeError):
+                        r["right"] = {"value": 50}
+            else:
+                r["right"] = {"value": val}
         else:
             r["right"] = {"value": 50}
 
@@ -239,8 +260,9 @@ def _crew_output_to_strategy(raw: dict, symbol: str, lookback: str, goal: str) -
         "timeframe": "1d",
         "lookback": {"period": lookback},
         "execution": {"order_timing": "next_bar_open", "side": "long_only"},
-        "entry": {"logic": raw.get("entry_logic", "all"), "rules": entry_rules},
-        "exit": {"logic": raw.get("exit_logic", "any"), "rules": exit_rules},
+        # Force 'any' logic overriding LLM to ensure healthy trade counts
+        "entry": {"logic": "any", "rules": entry_rules},
+        "exit": {"logic": "any", "rules": exit_rules},
         "position_sizing": {"mode": "percent_of_equity", "value": 1.0},
         "friction": {
             "commission": {"type": market["commission_type"], "value": market["commission_value"], "currency": market["currency"]},

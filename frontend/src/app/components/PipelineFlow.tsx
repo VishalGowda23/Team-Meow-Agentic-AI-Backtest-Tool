@@ -178,28 +178,28 @@ function AgentNode({ data }: { data: any }) {
       {data.hasInput && (
         <Handle
           type="target"
-          position={Position.Top}
+          position={Position.Left}
           style={{ background: data.accentColor || "#333", width: 8, height: 8, border: "2px solid #000" }}
         />
       )}
       {data.hasOutput && (
         <Handle
           type="source"
-          position={Position.Bottom}
+          position={Position.Right}
           style={{ background: data.accentColor || "#333", width: 8, height: 8, border: "2px solid #000" }}
         />
       )}
-      {data.hasLeftInput && (
+      {data.hasTopInput && (
         <Handle
           type="target"
-          position={Position.Left}
+          position={Position.Top}
           style={{ background: data.accentColor || "#333", width: 8, height: 8, border: "2px solid #000" }}
         />
       )}
-      {data.hasRightOutput && (
+      {data.hasBottomOutput && (
         <Handle
           type="source"
-          position={Position.Right}
+          position={Position.Bottom}
           style={{ background: data.accentColor || "#333", width: 8, height: 8, border: "2px solid #000" }}
         />
       )}
@@ -219,19 +219,20 @@ export default function PipelineFlow(props: PipelineFlowProps) {
     const reasoningLog = getLog("reason") || getLog("Reason");
     const dataLog = getLog("data") || getLog("Data");
     const compilerLog = getLog("compiler") || getLog("Compiler");
+    const macroShieldLog = getLog("macro-shield") || getLog("Macro-Shield") || getLog("shield");
     const executionLog = getLog("execution") || getLog("Execution");
     const analyticsLog = getLog("analytics") || getLog("Analytics");
 
-    const COL1 = 0;
-    const COL2 = 380;
-    const COL3 = 760;
+    const STEP_X = 350;
+    const ROW_MAIN = 0;
+    const ROW_SUB = 350;
 
     const nodes: Node[] = [
       // ── Row 1: Input ──────────────────────────
       {
         id: "input",
         type: "agentNode",
-        position: { x: COL1, y: 0 },
+        position: { x: 0, y: ROW_MAIN },
         data: {
           icon: "📝",
           title: "Strategy Input",
@@ -249,7 +250,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "config",
         type: "agentNode",
-        position: { x: COL2, y: 0 },
+        position: { x: 0, y: ROW_SUB },
         data: {
           icon: "⚙️",
           title: "Configuration",
@@ -272,7 +273,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "parser",
         type: "agentNode",
-        position: { x: COL1, y: 260 },
+        position: { x: STEP_X * 1, y: ROW_MAIN },
         data: {
           icon: "🧠",
           title: "LLM Parser Agent",
@@ -295,7 +296,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "data",
         type: "agentNode",
-        position: { x: COL2, y: 260 },
+        position: { x: STEP_X * 1, y: ROW_SUB },
         data: {
           icon: "📊",
           title: "Market Data Fetch",
@@ -320,7 +321,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "reasoning",
         type: "agentNode",
-        position: { x: COL1, y: 530 },
+        position: { x: STEP_X * 2, y: ROW_MAIN },
         data: {
           icon: "🔍",
           title: "Reasoning Agent",
@@ -345,7 +346,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "compiler",
         type: "agentNode",
-        position: { x: COL1, y: 790 },
+        position: { x: STEP_X * 3, y: ROW_MAIN },
         data: {
           icon: "⚙️",
           title: "Strategy Compiler",
@@ -365,7 +366,30 @@ export default function PipelineFlow(props: PipelineFlowProps) {
           ].filter(Boolean) as string[],
           hasInput: true,
           hasOutput: true,
-          hasLeftInput: true,
+          hasTopInput: true,
+          width: 260,
+        },
+      },
+
+      // ── Row 4.5: Macro-Shield ──────────────────
+      {
+        id: "macroshield",
+        type: "agentNode",
+        position: { x: STEP_X * 4, y: ROW_MAIN },
+        data: {
+          icon: "🛡️",
+          title: "Macro-Shield",
+          accentColor: "#ff1744",
+          borderColor: "#ff1744",
+          glow: true,
+          status: "complete",
+          duration: macroShieldLog?.duration_ms,
+          description: "Event safety gating: cool-off, shock detection, ATR volatility",
+          details: macroShieldLog?.summary
+            ? macroShieldLog.summary.split(". ").filter(Boolean).map((s: string) => `✓ ${s}`)
+            : ["✓ Shield active"],
+          hasInput: true,
+          hasOutput: true,
           width: 260,
         },
       },
@@ -374,7 +398,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "execution",
         type: "agentNode",
-        position: { x: COL1, y: 1060 },
+        position: { x: STEP_X * 5, y: ROW_MAIN },
         data: {
           icon: "▶️",
           title: "Backtest Execution",
@@ -392,6 +416,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
           ].filter(Boolean) as string[],
           hasInput: true,
           hasOutput: true,
+          hasBottomOutput: true,
           width: 260,
         },
       },
@@ -400,7 +425,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "analytics",
         type: "agentNode",
-        position: { x: COL1, y: 1340 },
+        position: { x: STEP_X * 6, y: ROW_MAIN },
         data: {
           icon: "📈",
           title: "Analytics Agent",
@@ -420,6 +445,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
             : ["✓ Metrics computed"],
           hasInput: true,
           hasOutput: true,
+          hasBottomOutput: true,
           width: 260,
         },
       },
@@ -428,7 +454,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "risk",
         type: "agentNode",
-        position: { x: COL2, y: 1060 },
+        position: { x: STEP_X * 5, y: ROW_SUB },
         data: {
           icon: "⚠️",
           title: "Risk Warnings",
@@ -441,7 +467,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
           details: props.riskWarnings
             ?.slice(0, 3)
             .map((w) => `⚠ ${w.message.length > 55 ? w.message.slice(0, 55) + "…" : w.message}`) || [],
-          hasLeftInput: true,
+          hasTopInput: true,
           width: 260,
           maxWidth: 300,
         },
@@ -449,7 +475,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "insightsNode",
         type: "agentNode",
-        position: { x: COL2, y: 1340 },
+        position: { x: STEP_X * 6, y: ROW_SUB },
         data: {
           icon: "✦",
           title: "Insights",
@@ -462,7 +488,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
           details: props.insights
             ?.slice(0, 3)
             .map((ins) => `✓ ${ins.message.length > 55 ? ins.message.slice(0, 55) + "…" : ins.message}`) || [],
-          hasLeftInput: true,
+          hasTopInput: true,
           width: 260,
           maxWidth: 300,
         },
@@ -472,7 +498,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       {
         id: "result",
         type: "agentNode",
-        position: { x: COL1, y: 1620 },
+        position: { x: STEP_X * 7, y: ROW_MAIN },
         data: {
           icon: "🏁",
           title: "Final Tearsheet",
@@ -515,11 +541,12 @@ export default function PipelineFlow(props: PipelineFlowProps) {
       { id: "e-config-data", source: "config", target: "data", style: { ...edgeStyle, stroke: "#ffd60044", strokeDasharray: "6 4" } },
       { id: "e-parser-reasoning", source: "parser", target: "reasoning", style: { ...animatedEdge, stroke: "#c6ff0055" }, animated: true },
       { id: "e-reasoning-compiler", source: "reasoning", target: "compiler", style: { ...animatedEdge, stroke: "#ff910055" }, animated: true },
-      { id: "e-data-compiler", source: "data", target: "compiler", targetHandle: null, style: { ...edgeStyle, stroke: "#ffd60044", strokeDasharray: "6 4" } },
-      { id: "e-compiler-exec", source: "compiler", target: "execution", style: { ...animatedEdge, stroke: "#00e67655" }, animated: true },
+      { id: "e-data-compiler", source: "data", target: "compiler", targetHandle: "top", style: { ...edgeStyle, stroke: "#ffd60044", strokeDasharray: "6 4" } },
+      { id: "e-compiler-shield", source: "compiler", target: "macroshield", style: { ...animatedEdge, stroke: "#ff174455" }, animated: true },
+      { id: "e-shield-exec", source: "macroshield", target: "execution", style: { ...animatedEdge, stroke: "#00e67655" }, animated: true },
       { id: "e-exec-analytics", source: "execution", target: "analytics", style: { ...animatedEdge, stroke: "#b388ff55" }, animated: true },
-      { id: "e-exec-risk", source: "execution", target: "risk", style: { ...edgeStyle, stroke: "#ff910033", strokeDasharray: "6 4" } },
-      { id: "e-analytics-insights", source: "analytics", target: "insightsNode", style: { ...edgeStyle, stroke: "#00e5ff33", strokeDasharray: "6 4" } },
+      { id: "e-exec-risk", source: "execution", target: "risk", targetHandle: "top", style: { ...edgeStyle, stroke: "#ff910033", strokeDasharray: "6 4" } },
+      { id: "e-analytics-insights", source: "analytics", target: "insightsNode", targetHandle: "top", style: { ...edgeStyle, stroke: "#00e5ff33", strokeDasharray: "6 4" } },
       { id: "e-analytics-result", source: "analytics", target: "result", style: { ...animatedEdge, stroke: "#00e67655" }, animated: true },
     ];
 
@@ -530,7 +557,7 @@ export default function PipelineFlow(props: PipelineFlowProps) {
     <div
       style={{
         width: "100%",
-        height: 1000,
+        height: 600,
         background: "#0d0d0d",
         border: "3px solid #222",
         boxShadow: "8px 8px 0px #000",

@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import MinimalBackground from "@/components/MinimalBackground";
+import Typewriter from "@/components/Typewriter";
+import { getUser, isAuthenticated, logout } from "@/lib/auth";
 
 const EXAMPLE_STRATEGIES = [
   "Buy when 50-day SMA crosses above 200-day SMA, sell when RSI exceeds 70",
@@ -10,8 +13,33 @@ const EXAMPLE_STRATEGIES = [
   "Buy when price closes above upper Bollinger Band, sell when it drops below the middle band",
 ];
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+interface LeaderboardEntry {
+  rank: number | null;
+  strategy_name: string | null;
+  symbol: string;
+  score: number;
+  sharpe_ratio: number | null;
+  total_return: number | null;
+  user_name: string;
+  created_at: string;
+}
+
 export default function Home() {
   const [hoveredExample, setHoveredExample] = useState<number | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; full_name: string; avatar_url?: string } | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [lbLoading, setLbLoading] = useState(true);
+
+  useEffect(() => {
+    setUser(getUser());
+    fetch(`${API_URL}/api/leaderboard`)
+      .then((r) => r.json())
+      .then((data) => setLeaderboard(data))
+      .catch(() => {})
+      .finally(() => setLbLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
@@ -39,14 +67,65 @@ export default function Home() {
             Astra<span style={{ color: "var(--accent-cyan)" }}>.AI</span>
           </span>
         </div>
-        <Link href="/dashboard">
-          <button className="nb-btn nb-btn-primary">Launch App →</button>
-        </Link>
+        <div className="flex items-center gap-3">
+          {user ? (
+            <>
+              <div
+                className="w-7 h-7 flex items-center justify-center font-bold text-[0.6rem] uppercase"
+                style={{
+                  background: user.avatar_url ? "transparent" : "var(--accent-purple)",
+                  color: "#000",
+                  border: "2px solid #000",
+                  overflow: "hidden",
+                }}
+              >
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  user.full_name?.[0] || user.email[0]
+                )}
+              </div>
+              <Link href="/dashboard">
+                <button className="nb-btn nb-btn-primary">Dashboard →</button>
+              </Link>
+              <button
+                onClick={logout}
+                className="mono text-[0.65rem] px-2 py-1 cursor-pointer"
+                style={{ color: "var(--text-muted)", border: "1px solid #333", background: "var(--bg-card)" }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <button className="nb-btn nb-btn-secondary">Login</button>
+              </Link>
+              <Link href="/dashboard">
+                <button className="nb-btn nb-btn-primary">Launch App →</button>
+              </Link>
+            </>
+          )}
+        </div>
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* React Bits Antigravity Background */}
+        <div className="absolute inset-x-0 top-0 z-0 pointer-events-none" style={{ height: '500px' }}>
+          <MinimalBackground />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+              maskImage: "linear-gradient(to bottom, transparent 10%, #000 90%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 10%, #000 90%)",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto">
           {/* Tag */}
           <div className="mb-6">
             <span className="nb-tag nb-tag-cyan">Agentic AI Engine</span>
@@ -57,7 +136,7 @@ export default function Home() {
             className="text-5xl md:text-7xl font-bold leading-[1.05] mb-6"
             style={{ maxWidth: "800px" }}
           >
-            Backtest strategies
+            <Typewriter text="Backtest strategies" speed={70} loop={true} />
             <br />
             in{" "}
             <span
@@ -69,7 +148,7 @@ export default function Home() {
                 boxShadow: "4px 4px 0px #000",
               }}
             >
-              plain English
+              <Typewriter text="plain English" speed={70} delay={1500} loop={true} />
             </span>
           </h1>
 
@@ -185,8 +264,22 @@ export default function Home() {
       </section>
 
       {/* ── Example strategies ──────────────────────────────── */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative py-20 px-6 overflow-hidden">
+        {/* Background Animation */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <MinimalBackground />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+              maskImage: "linear-gradient(to bottom, transparent 10%, #000 90%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 10%, #000 90%)",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto">
           <div className="mb-3">
             <span className="nb-tag nb-tag-orange">Examples</span>
           </div>
@@ -221,6 +314,107 @@ export default function Home() {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Leaderboard ─────────────────────────────────────── */}
+      <section className="relative py-20 px-6" style={{ borderTop: "3px solid #222", background: "var(--bg-secondary)" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-3">
+            <span className="nb-tag nb-tag-lime">Live</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">
+            🏆 Strategy Leaderboard
+          </h2>
+          <p className="text-sm mb-8" style={{ color: "var(--text-secondary)" }}>
+            Top-performing strategies ranked by composite score. Updated dynamically.
+          </p>
+
+          {lbLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-5 h-5 border-2 border-[var(--accent-cyan)] border-t-transparent rounded-full animate-spin" />
+              <span className="ml-3 text-sm" style={{ color: "var(--text-muted)" }}>Loading leaderboard...</span>
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div
+              className="nb-card text-center py-12"
+              style={{ borderColor: "#333" }}
+            >
+              <p className="text-2xl mb-2">📊</p>
+              <p className="text-sm font-bold" style={{ color: "var(--text-secondary)" }}>
+                No strategies on the leaderboard yet.
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                Run a backtest to be the first on the board!
+              </p>
+              <Link href="/dashboard">
+                <button className="nb-btn nb-btn-primary text-xs mt-4">Launch Dashboard →</button>
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left" style={{ borderCollapse: "separate", borderSpacing: "0 6px" }}>
+                <thead>
+                  <tr>
+                    {["#", "Strategy", "Symbol", "Score", "Sharpe", "Return", "Trader"].map((h) => (
+                      <th
+                        key={h}
+                        className="mono text-[0.6rem] uppercase tracking-wider py-2 px-3"
+                        style={{ color: "var(--text-muted)", borderBottom: "1px solid #222" }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((entry, i) => {
+                    const rank = entry.rank ?? i + 1;
+                    const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}`;
+                    const isTop3 = rank <= 3;
+                    return (
+                      <tr
+                        key={i}
+                        style={{
+                          background: isTop3 ? "rgba(0,229,255,0.04)" : "var(--bg-card)",
+                          border: isTop3 ? "1px solid rgba(0,229,255,0.15)" : "1px solid #222",
+                        }}
+                      >
+                        <td className="py-3 px-3 font-bold text-center" style={{ fontSize: isTop3 ? "1.1rem" : "0.85rem" }}>
+                          {medal}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                            {entry.strategy_name || "Unnamed Strategy"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className="nb-tag text-[0.6rem]"
+                            style={{ borderColor: "var(--accent-cyan)", color: "var(--accent-cyan)" }}
+                          >
+                            {entry.symbol}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 mono text-sm font-bold" style={{ color: "var(--accent-lime)" }}>
+                          {entry.score.toFixed(2)}
+                        </td>
+                        <td className="py-3 px-3 mono text-sm" style={{ color: "var(--text-secondary)" }}>
+                          {entry.sharpe_ratio != null ? entry.sharpe_ratio.toFixed(2) : "—"}
+                        </td>
+                        <td className="py-3 px-3 mono text-sm font-bold" style={{ color: (entry.total_return ?? 0) >= 0 ? "var(--accent-lime)" : "var(--accent-red)" }}>
+                          {entry.total_return != null ? `${entry.total_return >= 0 ? "+" : ""}${entry.total_return.toFixed(1)}%` : "—"}
+                        </td>
+                        <td className="py-3 px-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                          {entry.user_name || "Anonymous"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </section>
 
