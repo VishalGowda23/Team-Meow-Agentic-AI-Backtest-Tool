@@ -72,14 +72,15 @@ def create_crew(user_goal: str, symbol: str, lookback: str, market_context: str)
     strategy_architect = Agent(
         role="Strategy Architect",
         goal=(
-            f"Design the most optimal trading strategy to achieve this objective: {user_goal}. "
-            "Create specific, executable entry and exit rules using technical indicators."
+            f"Design the most optimal LONG-ONLY trading strategy to achieve this objective: {user_goal}. "
+            "Create specific, executable entry (buy) and exit (sell) rules using technical indicators."
         ),
         backstory=(
-            "You are an expert algorithmic trading strategist who designs rule-based strategies. "
-            "You only use these indicators: SMA, EMA, RSI, MACD, MACD Signal, "
-            "Bollinger Upper, Bollinger Lower, Bollinger Mid. "
-            "You create strategies with clear, unambiguous entry and exit conditions."
+            "You are an expert algorithmic trading strategist who designs rule-based strategies "
+            "for Astra, a long-only backtesting engine. You specialize in designing bullish entry "
+            "rules (to buy) and exit rules (to sell). You only use these indicators: "
+            "SMA, EMA, RSI, MACD, MACD Signal, Bollinger Upper, Bollinger Lower, Bollinger Mid. "
+            "You ensure that entry rules represent bullish setups and exit rules provide profit-taking or stop-loss."
         ),
         llm=llm,
         verbose=False,
@@ -90,14 +91,14 @@ def create_crew(user_goal: str, symbol: str, lookback: str, market_context: str)
     risk_assessor = Agent(
         role="Risk Assessor",
         goal=(
-            "Review the proposed strategy for risk, feasibility, and completeness. "
-            "Ensure position sizing is appropriate and add risk controls if missing."
+            "Review the proposed strategy for risk, feasibility, and appropriateness for a long-only engine. "
+            "Ensure entry rules are not too restrictive and logic is sound."
         ),
         backstory=(
             "You are a risk management specialist who reviews trading strategies. "
-            "You check for common pitfalls: overfitting, excessive drawdown potential, "
-            "missing stop-losses, and parameter sensitivity. You optimize strategies "
-            "for real-world execution."
+            "You check for common pitfalls: overly restrictive conditions that result in zero trades, "
+            "bearish setups in a long-only engine, and parameter sensitivity. You optimize rules "
+            "to ensure they generate a healthy number of signals for robust backtesting."
         ),
         llm=llm,
         verbose=False,
